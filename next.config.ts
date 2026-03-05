@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: false,
   turbopack: {},
+  async redirects() {
+    return [
+      {
+        source: "/inscrições",
+        destination: "/inscricoes",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

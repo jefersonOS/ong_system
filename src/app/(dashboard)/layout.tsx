@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Breadcrumb from "@/components/Breadcrumb";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import QuickActionFAB from "@/components/QuickActionFAB";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -14,7 +16,14 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { initialLoading } = useAuth();
+    const { currentUser, initialLoading, isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!initialLoading && !isAuthenticated) {
+            router.replace("/login");
+        }
+    }, [initialLoading, isAuthenticated, router]);
 
     if (initialLoading) {
         return (
