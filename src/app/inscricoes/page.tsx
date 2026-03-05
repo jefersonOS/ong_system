@@ -22,13 +22,6 @@ export default function LandingPortalPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
-    // Redirecionar se já estiver autenticado
-    useEffect(() => {
-        if (!initialLoading && isAuthenticated) {
-            router.replace("/home");
-        }
-    }, [isAuthenticated, initialLoading, router]);
-
     useEffect(() => {
         fetchPublicCourses();
     }, []);
