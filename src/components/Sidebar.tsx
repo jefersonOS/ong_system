@@ -137,7 +137,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
 
     const menuItems = [
-        { icon: Home, label: t("nav.dashboard"), path: "/" },
+        { icon: Home, label: t("nav.dashboard"), path: "/home" },
         { icon: ShieldAlert, label: "Backoffice", path: "/admin", superAdminOnly: true },
         { icon: Building2, label: t("nav.organizations") || "Projetos", path: "/organs" },
         { icon: FileText, label: t("nav.workPlans"), path: "/work-plans" },

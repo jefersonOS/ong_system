@@ -15,13 +15,19 @@ import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
 
 export default function LandingPortalPage() {
-    const { currentUser, isAuthenticated } = useAuth();
-    const { t } = useTranslation();
+    const { currentUser, isAuthenticated, initialLoading } = useAuth();
     const router = useRouter();
     const supabase = createClient();
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+
+    // Redirecionar se já estiver autenticado
+    useEffect(() => {
+        if (!initialLoading && isAuthenticated) {
+            router.replace("/home");
+        }
+    }, [isAuthenticated, initialLoading, router]);
 
     useEffect(() => {
         fetchPublicCourses();
@@ -61,7 +67,7 @@ export default function LandingPortalPage() {
                     <div className="flex items-center gap-4">
                         {isAuthenticated ? (
                             <Button onClick={() => router.push("/home")} variant="default" className="bg-[#0B4F6C] hover:bg-[#083d54]">
-                                Ir para o Painel <Layout className="ml-2 h-4 w-4" />
+                                Acessar Painel <Layout className="ml-2 h-4 w-4" />
                             </Button>
                         ) : (
                             <>

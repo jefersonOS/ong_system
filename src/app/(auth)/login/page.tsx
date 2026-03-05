@@ -26,7 +26,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(email, password);
-            router.push("/");
+            router.push("/home");
         } catch (error) {
             toast({
                 title: t("common.error"),

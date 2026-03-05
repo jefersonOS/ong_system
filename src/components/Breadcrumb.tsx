@@ -32,7 +32,7 @@ export default function Breadcrumb() {
         <nav className="px-4 lg:px-6 py-2 bg-white dark:bg-gray-900 border-b border-border" aria-label="Breadcrumb">
             <ol className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <li>
-                    <Link href="/" className="flex items-center gap-1 hover:text-[#0B4F6C] transition-colors">
+                    <Link href="/home" className="flex items-center gap-1 hover:text-[#0B4F6C] transition-colors">
                         <Home className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">Início</span>
                     </Link>
