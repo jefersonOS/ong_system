@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         updateProfile,
         hasRole,
-        isAuthenticated: !!currentUser,
+        isAuthenticated: !!user,
         initialLoading,
     };
 
