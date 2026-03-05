@@ -32,9 +32,14 @@ export default function OrganListPage() {
     const fetchOrgans = async () => {
         let query = supabase.from("organs").select("*").order("name");
 
-        // Se não for Admin, filtra apenas para ver o seu projeto
-        if (currentUser?.role !== "Admin" && currentUser?.organ_id) {
-            query = query.eq("id", currentUser.organ_id);
+        // Se não for Admin nem SuperAdmin, aplica filtros de isolamento
+        if (currentUser?.role !== "Admin" && currentUser?.role !== "SuperAdmin") {
+            if (currentUser?.organ_id) {
+                query = query.eq("id", currentUser.organ_id);
+            } else {
+                // Se não tem organ_id vinculado, vê apenas o que ele criou (Dono)
+                query = query.eq("created_by", currentUser?.id);
+            }
         }
 
         const { data } = await query;
@@ -63,6 +68,15 @@ export default function OrganListPage() {
             });
             setLoading(false);
             return;
+        }
+
+        // Se o usuário ainda não tem um projeto vinculado no seu perfil, vincula este que ele acabou de criar
+        if (!currentUser?.organ_id) {
+            const { data: newOrg } = await supabase.from("organs").select("id").eq("name", newName).eq("created_by", currentUser?.id).order("created_at", { ascending: false }).limit(1).single();
+            if (newOrg) {
+                await supabase.from("profiles").update({ organ_id: newOrg.id }).eq("id", currentUser?.id);
+                window.location.reload(); // Recarrega para atualizar o contexto de autenticação com o novo organ_id
+            }
         }
 
         toast({ title: "Sucesso", description: "Projeto criado com sucesso!" });
