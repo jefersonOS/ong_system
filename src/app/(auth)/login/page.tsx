@@ -16,16 +16,10 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const { login, isAuthenticated, initialLoading } = useAuth();
+    const { login, logout, isAuthenticated, initialLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useTranslation();
-
-    useEffect(() => {
-        if (isAuthenticated && !initialLoading) {
-            router.replace("/home");
-        }
-    }, [isAuthenticated, initialLoading, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -60,46 +54,65 @@ export default function LoginPage() {
                     <CardDescription>{t("auth.loginDesc") || "Entre com suas credenciais para acessar a plataforma"}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">{t("auth.email") || "E-mail"}</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                placeholder="seu@email.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
+                    {isAuthenticated && !initialLoading ? (
+                        <div className="space-y-4 text-center py-4">
+                            <p className="text-sm font-medium text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
+                                Você já está conectado ao sistema.
+                            </p>
+                            <Button className="w-full" onClick={() => router.push("/home")}>
+                                Ir para o Painel Principal
+                            </Button>
+                            <div className="pt-4 border-t border-gray-100">
+                                <p className="text-xs text-muted-foreground mb-2">Está enfrentando problemas de carregamento contínuo? Limpe seu acesso clicando abaixo:</p>
+                                <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50" onClick={logout}>
+                                    Sair da conta (Limpar Cache)
+                                </Button>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">{t("auth.password") || "Senha"}</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            ) : (
-                                <>
-                                    <LogIn className="h-4 w-4 mr-2" />
-                                    {t("auth.login") || "Entrar"}
-                                </>
-                            )}
-                        </Button>
-                    </form>
-                    <div className="mt-4 text-center text-sm text-muted-foreground">
-                        {t("auth.noAccount") || "Não tem uma conta?"}{" "}
-                        <Link href="/signup" className="text-[#0B4F6C] font-medium hover:underline">
-                            {t("auth.signup") || "Cadastre-se"}
-                        </Link>
-                    </div>
+                    ) : (
+                        <>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">{t("auth.email") || "E-mail"}</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        placeholder="seu@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">{t("auth.password") || "Senha"}</Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <Button type="submit" className="w-full" disabled={loading}>
+                                    {loading ? (
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    ) : (
+                                        <>
+                                            <LogIn className="h-4 w-4 mr-2" />
+                                            {t("auth.login") || "Entrar"}
+                                        </>
+                                    )}
+                                </Button>
+                            </form>
+                            <div className="mt-4 text-center text-sm text-muted-foreground">
+                                {t("auth.noAccount") || "Não tem uma conta?"}{" "}
+                                <Link href="/signup" className="text-[#0B4F6C] font-medium hover:underline">
+                                    {t("auth.signup") || "Cadastre-se"}
+                                </Link>
+                            </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
         </div>

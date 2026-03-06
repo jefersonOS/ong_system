@@ -23,12 +23,6 @@ function SignupForm() {
     const { toast } = useToast();
     const { t } = useTranslation();
 
-    useEffect(() => {
-        if (isAuthenticated && !initialLoading) {
-            router.replace("/home");
-        }
-    }, [isAuthenticated, initialLoading, router]);
-
     // Se o gestor enviou um link com ?project=ID, ele entra direto no projeto
     const organId = searchParams.get("project") || "";
     // Se tem projeto no link, entra como Membro. Se não tem nada, é o dono/gestor.
