@@ -22,6 +22,7 @@ export default function SuperAdminPage() {
 
     const [loading, setLoading] = useState(true);
     const [clients, setClients] = useState<any[]>([]);
+    const [usersList, setUsersList] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalClients: 0, activeSubscriptions: 0, totalUsers: 0 });
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export default function SuperAdminPage() {
         try {
             const [orgsRes, usersRes] = await Promise.all([
                 supabase.from("organs").select("*").order("created_at", { ascending: false }),
-                supabase.from("profiles").select("id, role"),
+                supabase.from("profiles").select("id, name, role, created_at").order("created_at", { ascending: false }),
             ]);
 
             if (orgsRes.error) throw orgsRes.error;
@@ -45,6 +46,7 @@ export default function SuperAdminPage() {
             const users = usersRes.data || [];
 
             setClients(orgs);
+            setUsersList(users);
             setStats({
                 totalClients: orgs.length,
                 activeSubscriptions: orgs.filter(o => o.subscription_status === 'active').length,
@@ -177,6 +179,42 @@ export default function SuperAdminPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            <Card className="mt-8">
+                <CardHeader>
+                    <CardTitle>Usuários Registrados</CardTitle>
+                    <CardDescription>Visualize todos os usuários ativos na plataforma</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Função</TableHead>
+                                <TableHead>Data de Registro</TableHead>
+                                <TableHead className="text-right">ID</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {usersList.map((usr) => (
+                                <TableRow key={usr.id}>
+                                    <TableCell className="font-medium">{usr.name || "Sem nome"}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{usr.role}</Badge>
+                                    </TableCell>
+                                    <TableCell>{usr.created_at ? new Date(usr.created_at).toLocaleDateString('pt-BR') : 'N/A'}</TableCell>
+                                    <TableCell className="text-right text-xs text-muted-foreground">{usr.id.split('-')[0]}...</TableCell>
+                                </TableRow>
+                            ))}
+                            {usersList.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground py-4">Nenhum usuário encontrado.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
