@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { t } = useTranslation();
     const supabase = createClient();
 
-    const fetchProfile = async (userId: string) => {
+    const fetchProfile = async (userId: string, authUser?: User | null) => {
         const { data, error, status } = await supabase
             .from('profiles')
             .select('*')
@@ -45,9 +45,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
             if (status === 406) {
                 console.warn('Perfil não encontrado para o usuário:', userId);
+                // Use the passed user object or the current state
+                const effectiveUser = authUser || user;
                 const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
-                    .insert({ id: userId, name: user?.email?.split('@')[0] || 'Usuário', role: 'Membro' })
+                    .insert({
+                        id: userId,
+                        name: effectiveUser?.email?.split('@')[0] || 'Usuário',
+                        role: 'Membro'
+                    })
                     .select()
                     .single();
 
@@ -83,14 +89,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }, 5000);
 
             try {
+                // Forcing refresh of session to avoid stale data
                 const { data: { session }, error } = await supabase.auth.getSession();
+
                 if (error) {
                     console.error('Initial session check error:', error);
                 }
+
                 const sessionUser = session?.user || null;
                 if (sessionUser) {
                     setUser(sessionUser);
-                    await fetchProfile(sessionUser.id);
+                    await fetchProfile(sessionUser.id, sessionUser);
                 }
             } catch (error) {
                 console.error('Error getting session:', error);
@@ -103,10 +112,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         getInitialSession();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
+            async (event, session) => {
+                console.log('Auth state change event:', event);
                 if (session?.user) {
                     setUser(session.user);
-                    await fetchProfile(session.user.id);
+                    await fetchProfile(session.user.id, session.user);
                 } else {
                     setUser(null);
                     setCurrentUser(null);
@@ -125,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         if (data?.user) {
             setUser(data.user);
-            await fetchProfile(data.user.id);
+            await fetchProfile(data.user.id, data.user);
         }
     };
 
@@ -144,14 +154,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (data?.user) {
             setUser(data.user);
-            await fetchProfile(data.user.id);
+            await fetchProfile(data.user.id, data.user);
         }
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
-        setCurrentUser(null);
-        setUser(null);
+        try {
+            // Sign out from Supabase
+            await supabase.auth.signOut();
+
+            // Clear all local state
+            setCurrentUser(null);
+            setUser(null);
+
+            // Clear browser cache and storage
+            if (typeof window !== 'undefined') {
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Clear all cookies
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i];
+                    const eqPos = cookie.indexOf("=");
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                }
+
+                // Unregister all service workers to break PWA cache
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+
+                // Use a hard reload to ensure a clean slate
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Fallback for extreme cases
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+        }
     };
 
     const updateProfile = async (data: Partial<Profile>): Promise<Profile> => {
