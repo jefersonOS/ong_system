@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,11 +17,17 @@ function SignupForm() {
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
-    const { signup } = useAuth();
+    const { signup, isAuthenticated, initialLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        if (isAuthenticated && !initialLoading) {
+            router.replace("/home");
+        }
+    }, [isAuthenticated, initialLoading, router]);
 
     // Se o gestor enviou um link com ?project=ID, ele entra direto no projeto
     const organId = searchParams.get("project") || "";

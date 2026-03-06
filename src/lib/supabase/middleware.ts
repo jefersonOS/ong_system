@@ -45,12 +45,6 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Redirect logged-in users away from auth pages
-    if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/home';
-        return NextResponse.redirect(url);
-    }
-
+    // Note: To prevent Server vs Client redirect loops on auth mismatch, we let the client handle redirecting away from /login if already authenticated.
     return supabaseResponse;
 }
