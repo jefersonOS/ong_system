@@ -40,9 +40,14 @@ export async function updateSession(request: NextRequest) {
     );
 
     if (!user && !isPublicRoute) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/login';
-        return NextResponse.redirect(url);
+        // Prevent redirect loops by checking if we are already on the login page
+        if (request.nextUrl.pathname !== '/login') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/login';
+            // Add a parameter to help identify the redirect source if needed
+            url.searchParams.set('redirected', 'true');
+            return NextResponse.redirect(url);
+        }
     }
 
     // Note: To prevent Server vs Client redirect loops on auth mismatch, we let the client handle redirecting away from /login if already authenticated.

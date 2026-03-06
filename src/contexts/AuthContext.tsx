@@ -35,17 +35,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { t } = useTranslation();
     const supabase = createClient();
 
+    const fetchProfile = async (userId: string) => {
+        const { data, error, status } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            if (status === 406) {
+                console.warn('Perfil não encontrado para o usuário:', userId);
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({ id: userId, name: user?.email?.split('@')[0] || 'Usuário', role: 'Membro' })
+                    .select()
+                    .single();
+
+                if (!insertError) {
+                    setCurrentUser(newProfile as Profile);
+                }
+            } else {
+                console.error('Erro detalhado ao buscar perfil:', error);
+            }
+            return;
+        }
+
+        if (data) {
+            setCurrentUser(data as Profile);
+        }
+    };
+
     useEffect(() => {
         const getInitialSession = async () => {
+            // Check for required env variables
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+                console.error('Supabase keys are missing! Check your Vercel Environment Variables.');
+                setInitialLoading(false);
+                return;
+            }
+
+            // Set a safety timeout of 5 seconds to prevent infinite loading if Supabase is slow/fails
+            const timeoutId = setTimeout(() => {
+                if (initialLoading) {
+                    console.warn('Auth initialization timed out, proceeding with default state.');
+                    setInitialLoading(false);
+                }
+            }, 5000);
+
             try {
-                const { data: { user: authUser } } = await supabase.auth.getUser();
-                if (authUser) {
-                    setUser(authUser);
-                    await fetchProfile(authUser.id);
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('Initial session check error:', error);
+                }
+                const sessionUser = session?.user || null;
+                if (sessionUser) {
+                    setUser(sessionUser);
+                    await fetchProfile(sessionUser.id);
                 }
             } catch (error) {
                 console.error('Error getting session:', error);
             } finally {
+                clearTimeout(timeoutId);
                 setInitialLoading(false);
             }
         };
@@ -67,43 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return () => subscription.unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    const fetchProfile = async (userId: string) => {
-        const { data, error, status } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (error) {
-            // Se o erro for 406, significa que o registro não existe na tabela profiles
-            if (status === 406) {
-                console.warn('Perfil não encontrado para o usuário:', userId);
-                // Opcional: Criar perfil básico se não existir
-                const { data: newProfile, error: insertError } = await supabase
-                    .from('profiles')
-                    .insert({ id: userId, name: user?.email?.split('@')[0] || 'Usuário', role: 'Membro' })
-                    .select()
-                    .single();
-
-                if (!insertError) {
-                    setCurrentUser(newProfile as Profile);
-                }
-            } else {
-                console.error('Erro detalhado ao buscar perfil:', {
-                    message: error.message,
-                    details: error.details,
-                    hint: error.hint,
-                    code: error.code
-                });
-            }
-            return;
-        }
-
-        if (data) {
-            setCurrentUser(data as Profile);
-        }
-    };
 
     const login = async (email: string, password: string) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });

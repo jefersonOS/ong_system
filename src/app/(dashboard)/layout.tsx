@@ -15,19 +15,24 @@ export default function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const [mounted, setMounted] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { currentUser, initialLoading, isAuthenticated } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-        if (!initialLoading && !isAuthenticated) {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (mounted && !initialLoading && !isAuthenticated) {
             router.replace("/login");
         }
-    }, [initialLoading, isAuthenticated, router]);
+    }, [mounted, initialLoading, isAuthenticated, router]);
 
-    if (initialLoading) {
+    if (!mounted || initialLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center min-h-screen bg-white">
                 <LoadingSpinner size="lg" text="Carregando..." />
             </div>
         );
